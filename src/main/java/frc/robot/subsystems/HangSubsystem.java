@@ -5,15 +5,12 @@ import com.revrobotics.RelativeEncoder;
 import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
-import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.Constants.HangConstants;
 
 public class HangSubsystem extends SubsystemBase {
-
-    boolean isOnBar = false;
 
     CANSparkMax LeftHangMotor = new CANSparkMax(HangConstants.LEFT_HANG_MOTOR, MotorType.kBrushless);
     CANSparkMax RightHangMotor = new CANSparkMax(HangConstants.RIGHT_HANG_MOTOR, MotorType.kBrushless);

@@ -11,7 +11,6 @@ import frc.robot.Constants.AimbotConstants;
 import frc.robot.subsystems.DrivetrainSubsystem;
 import frc.robot.subsystems.Limelight;
 
-// NOTE:  Consider using this command inline, rather than writing a subclass.
 public class AimbotPID extends PIDCommand {
 
   public AimbotPID(Limelight limelight, DrivetrainSubsystem driveSubsystem) {
@@ -24,8 +23,8 @@ public class AimbotPID extends PIDCommand {
         output -> {
           // Use the output here
           double speed = output * AimbotConstants.baseSpeed  *-1;
-          // Tune this
-          driveSubsystem.drive(new ChassisSpeeds(0, speed, 0));
+
+          driveSubsystem.drive(new ChassisSpeeds(0, 0, speed* DrivetrainSubsystem.MAX_VELOCITY_METERS_PER_SECOND));
         });
 
     addRequirements(driveSubsystem);

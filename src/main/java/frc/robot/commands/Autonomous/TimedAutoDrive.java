@@ -2,7 +2,7 @@
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
 
-package frc.robot.commands;
+package frc.robot.commands.Autonomous;
 
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.Timer;
@@ -16,12 +16,19 @@ public class TimedAutoDrive extends CommandBase {
   DrivetrainSubsystem drivetrainSubsystem;
   ChassisSpeeds speeds;
   double desiredTime;
+  boolean fieldOriented;
 
   public TimedAutoDrive(DrivetrainSubsystem drivetrainSubsystem, ChassisSpeeds speeds, double desiredTime) {
+    this(drivetrainSubsystem, speeds, desiredTime, true);
+  }
+
+  public TimedAutoDrive(DrivetrainSubsystem drivetrainSubsystem, ChassisSpeeds speeds, double desiredTime,
+      boolean fieldOriented) {
     addRequirements(drivetrainSubsystem);
     this.drivetrainSubsystem = drivetrainSubsystem;
     this.speeds = speeds;
     this.desiredTime = desiredTime;
+    this.fieldOriented = fieldOriented;
   }
 
   // Called when the command is initially scheduled.
@@ -34,13 +41,21 @@ public class TimedAutoDrive extends CommandBase {
   // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
-    drivetrainSubsystem.drive(
-        ChassisSpeeds.fromFieldRelativeSpeeds(
-            speeds.vxMetersPerSecond,
-            speeds.vyMetersPerSecond,
-            speeds.omegaRadiansPerSecond,
-            drivetrainSubsystem.getGyroscopeRotation()
-      ));
+    if (fieldOriented) {
+      drivetrainSubsystem.drive(
+          ChassisSpeeds.fromFieldRelativeSpeeds(
+              speeds.vxMetersPerSecond,
+              speeds.vyMetersPerSecond,
+              speeds.omegaRadiansPerSecond,
+              drivetrainSubsystem.getGyroscopeRotation()));
+    } else {
+      drivetrainSubsystem.drive(
+          new ChassisSpeeds(
+              speeds.vxMetersPerSecond,
+              speeds.vyMetersPerSecond,
+              speeds.omegaRadiansPerSecond));
+    }
+
   }
 
   // Called once the command ends or is interrupted.

@@ -4,6 +4,7 @@
 
 package frc.robot;
 
+import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
@@ -11,6 +12,7 @@ import edu.wpi.first.wpilibj.XboxController.Button;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
@@ -18,37 +20,28 @@ import frc.robot.Constants.ControllerConstants;
 import frc.robot.Constants.HangConstants;
 import frc.robot.Constants.LimelightConstants;
 import frc.robot.Constants.ShooterConstants;
-import frc.robot.commands.AimShotCalculated;
+import frc.robot.commands.AimAndFire;
 import frc.robot.commands.AimShotPID;
-import frc.robot.commands.ControlIntakeSolenoids;
 import frc.robot.commands.DefaultDriveCommand;
 import frc.robot.commands.ExtendHangSubsystem;
-import frc.robot.commands.LowAuto;
+import frc.robot.commands.IntakeBall;
+import frc.robot.commands.Autonomous.LowAuto;
+import frc.robot.commands.Autonomous.RedTwoBallHighGoal;
 import frc.robot.commands.RetractHangSubsystem;
 import frc.robot.commands.SpitOutBall;
 import frc.robot.commands.SwitchPipeline;
-import frc.robot.commands.TimedAutoDrive;
 import frc.robot.commands.ToggleCameraMode;
 import frc.robot.commands.ToggleStreamMode;
-import frc.robot.commands.Deprecated.IntakeBall;
+import frc.robot.commands.Autonomous.TimedAutoDrive;
 import frc.robot.commands.Deprecated.MoveConveyor;
 import frc.robot.commands.Deprecated.ReverseIntake;
-import frc.robot.subsystems.ColorSensor;
-// import frc.robot.commands.Deprecated.IntakeBall;
-// import frc.robot.commands.Deprecated.IntakeOff;
-// import frc.robot.commands.Deprecated.MoveConveyor;
-// import frc.robot.commands.Deprecated.ReverseIntake;
-// import frc.robot.commands.Deprecated.ShooterOff;
-// import frc.robot.commands.Deprecated.StopConveyor;
 import frc.robot.subsystems.ConveyorSubsystem;
-// import frc.robot.commands.TakeInBall;
 import frc.robot.subsystems.DrivetrainSubsystem;
 import frc.robot.subsystems.HangSubsystem;
-// import frc.robot.subsystems.HangSubsystem;
 import frc.robot.subsystems.IntakeSubsystem;
 import frc.robot.subsystems.Limelight;
-// import frc.robot.subsystems.IntakeSubsystem;
 import frc.robot.subsystems.ShooterSubsystem;
+import frc.robot.util.DPadButton;
 
 /**
  * This class is where the bulk of the robot should be declared. Since
@@ -68,10 +61,11 @@ public class RobotContainer {
   private final XboxController driverController = new XboxController(0);
   private final XboxController mechanismController = new XboxController(1);
   private final ShooterSubsystem shooterSubsystem = new ShooterSubsystem();
-  private final ColorSensor colorSensor = new ColorSensor();
-  private final Limelight limelight = new Limelight(LimelightConstants.LedMode.DEFAULT, LimelightConstants.CamMode.VISION);
-
+  private final Limelight limelight = new Limelight(LimelightConstants.LedMode.DEFAULT,
+      LimelightConstants.CamMode.VISION);
+  // private final ColorSensor colorSensor = new ColorSensor();
   private SendableChooser<Command> autonomousChooser = new SendableChooser<Command>();
+
   /**
    * The container for the robot. Contains subsystems, OI devices, and commands.
    */
@@ -85,14 +79,16 @@ public class RobotContainer {
         drivetrainSubsystem,
         () -> modifyAxis(driverController.getLeftY()) * DrivetrainSubsystem.MAX_VELOCITY_METERS_PER_SECOND,
         () -> modifyAxis(driverController.getLeftX()) * DrivetrainSubsystem.MAX_VELOCITY_METERS_PER_SECOND,
-        () -> modifyAxis(driverController.getRightX()) * DrivetrainSubsystem.MAX_ANGULAR_VELOCITY_RADIANS_PER_SECOND
-    ));
+        () -> modifyAxis(driverController.getRightX()) * DrivetrainSubsystem.MAX_ANGULAR_VELOCITY_RADIANS_PER_SECOND));
     SmartDashboard.putData("Toggle Camera Mode", new ToggleCameraMode(limelight));
     SmartDashboard.putData("Toggle Stream Mode", new ToggleStreamMode(limelight));
     SmartDashboard.putData("Switch Pipeline", new SwitchPipeline(limelight));
+    SmartDashboard.putData("zero gyro", new InstantCommand(drivetrainSubsystem::zeroGyroscope));
+    SmartDashboard.putData("reset odometry", new InstantCommand(drivetrainSubsystem::resetOdometry));
     setUpAutonomousChooser();
     // Configure the button bindings
     configureButtonBindings();
+    CameraServer.startAutomaticCapture();
   }
 
   /**
@@ -109,6 +105,10 @@ public class RobotContainer {
         .getRawAxis(ControllerConstants.RIGHT_TRIGGER) > ControllerConstants.TRIGGER_ACTIVATION_THRESHOLD);
     Trigger mechLeftTrigger = new Trigger(() -> mechanismController
         .getRawAxis(ControllerConstants.LEFT_TRIGGER) > ControllerConstants.TRIGGER_ACTIVATION_THRESHOLD);
+    Trigger driverRightTrigger = new Trigger(() -> driverController
+        .getRawAxis(ControllerConstants.RIGHT_TRIGGER) > ControllerConstants.TRIGGER_ACTIVATION_THRESHOLD);
+    Trigger driverLeftTrigger = new Trigger(() -> driverController
+        .getRawAxis(ControllerConstants.LEFT_TRIGGER) > ControllerConstants.TRIGGER_ACTIVATION_THRESHOLD);
     JoystickButton mechA = new JoystickButton(mechanismController, Button.kA.value);
     JoystickButton mechB = new JoystickButton(mechanismController, Button.kB.value);
     JoystickButton mechX = new JoystickButton(mechanismController, Button.kX.value);
@@ -119,67 +119,93 @@ public class RobotContainer {
     JoystickButton driveBumperR = new JoystickButton(driverController, Button.kRightBumper.value);
     JoystickButton driverA = new JoystickButton(driverController, Button.kA.value);
     JoystickButton driverB = new JoystickButton(driverController, Button.kB.value);
-    JoystickButton driverY = new JoystickButton(driverController, Button.kY.value);
+    // JoystickButton driverY = new JoystickButton(driverController, Button.kY.value);
     JoystickButton driverX = new JoystickButton(driverController, Button.kX.value);
-
-    // mechBumperR.whileActiveContinuous(new TakeInBall(conveyorSubsystem, intakeSubsystem));
-    // mechRightTrigger.whileActiveContinuous(new SpitOutBall(intakeSubsystem, conveyorSubsystem));
-    //mechBumperL.whileHeld(new Shoot(shooterSubsystem, 0.8));
+    DPadButton dPadUp = new DPadButton(driverController, DPadButton.Direction.UP);
+    DPadButton dPadDown = new DPadButton(driverController, DPadButton.Direction.DOWN);
 
     mechBumperR.whileHeld(new IntakeBall(intakeSubsystem));
     mechRightTrigger.whileActiveContinuous(new MoveConveyor(conveyorSubsystem));
     mechLeftTrigger.whileActiveContinuous(new SpitOutBall(intakeSubsystem, conveyorSubsystem));
     mechY.whileHeld(new ReverseIntake(intakeSubsystem));
 
-    mechBumperL.whenHeld(new AimShotCalculated(shooterSubsystem, limelight)).whenInactive(shooterSubsystem::rampDownShooter);
-    mechX.whenHeld(new AimShotPID(shooterSubsystem, ShooterConstants.LOWER_HUB_RPM), true).whenInactive(shooterSubsystem::rampDownShooter);
-    mechB.whenHeld(new AimShotPID(shooterSubsystem, ShooterConstants.UPPER_HUB_FALLBACK_RPM), true).whenInactive(shooterSubsystem::rampDownShooter);
+    // mechB.whenHeld(new AimShotPID(shooterSubsystem, 2500)).whenInactive(shooterSubsystem::rampDownShooter);
 
-    driverY.whenPressed(new ControlIntakeSolenoids(intakeSubsystem));
+    // mechB.whenHeld(new InstantCommand(() -> shooterSubsystem.setRPM(limelight.curveRPM())))
+    mechB.whileHeld(() -> shooterSubsystem.setRPM(limelight.curveRPM()))
+    .whenInactive(shooterSubsystem::rampDownShooter);
 
-    driverX.whenPressed(drivetrainSubsystem::zeroGyroscope);
+    // mechX.whenHeld(new InstantCommand(() -> shooterSubsystem.setRPM(limelight.distanceToRpm())))
+    mechX.whileHeld(() -> shooterSubsystem.setRPM(limelight.distanceToRpm()))
+    .whenInactive(shooterSubsystem::rampDownShooter);
+
+    // mechX.whenHeld(new AimShotPID(shooterSubsystem, ShooterConstants.LOWER_HUB_RPM), true)
+    //     .whenInactive(shooterSubsystem::rampDownShooter);
+
+    mechBumperL.whenPressed(new AimAndFire(shooterSubsystem, conveyorSubsystem, limelight, drivetrainSubsystem));
+
+    mechA.whenPressed(new AimShotPID(shooterSubsystem, ShooterConstants.UPPER_HUB_FALLBACK_RPM))
+        .whenInactive(shooterSubsystem::rampDownShooter);
+
+    // driverA.whenPressed(new ControlIntakeSolenoids(intakeSubsystem));
+    driverA.whenPressed(intakeSubsystem::controlIntakeSolenoids);
+
+    dPadUp.whileHeld(new RetractHangSubsystem(hangSubsystem, HangConstants.HANG_SPEED)); // slowly make it go up
+    dPadDown.toggleWhenActive(new RetractHangSubsystem(hangSubsystem, -0.1)); // hold the robot in position
 
     driveBumperR.whenPressed(new ExtendHangSubsystem(hangSubsystem));
     driveBumperL.whileActiveContinuous(new RetractHangSubsystem(hangSubsystem, HangConstants.LOWER_SPEED));
-    driverA.toggleWhenActive(new RetractHangSubsystem(hangSubsystem, -0.1));
-    
-    // new Button(driverController::getYButton)
-    // // No requirements because we don't need to interrupt anything
-    // .whenPressed(drivetrainSubsystem::zeroGyroscope);
+
+    driverB.whenPressed(new InstantCommand(drivetrainSubsystem::toggleFieldOriented)); //Maybe call directly
+    driverX.whenPressed(new InstantCommand(drivetrainSubsystem::zeroGyroscope)); //Maybe call directly
+
+    driverRightTrigger.whenActive(drivetrainSubsystem::turboSpeed).whenInactive(drivetrainSubsystem::standardSpeed);
+    driverLeftTrigger.whenActive(drivetrainSubsystem::slowSpeed).whenInactive(drivetrainSubsystem::standardSpeed);
   }
 
   /**
    * Use this to pass thex autonomous command to the main {@link Robot} class.
+   * 
    * @return the command to run in autonomous
    */
 
   public void setUpAutonomousChooser() {
-    autonomousChooser.setDefaultOption("Low Auto", new LowAuto(shooterSubsystem, conveyorSubsystem));
+    // autonomousChooser.setDefaultOption("SixBallAuto", new
+    // SixBallAutoBlue(intakeSubsystem, limelight, drivetrainSubsystem,
+    // shooterSubsystem));
+    autonomousChooser.addOption("Low Auto", new LowAuto(shooterSubsystem, conveyorSubsystem));
+
     autonomousChooser.addOption("Throw it Back", new SequentialCommandGroup(
-      new LowAuto(shooterSubsystem, conveyorSubsystem),
-      new TimedAutoDrive(drivetrainSubsystem, new ChassisSpeeds(3, 0, 0), 1.5)
-    ));
+        new LowAuto(shooterSubsystem, conveyorSubsystem),
+        new TimedAutoDrive(drivetrainSubsystem, new ChassisSpeeds(3, 0, 0), 1)));
+    autonomousChooser.addOption("High Auto", new SequentialCommandGroup(
+        new TimedAutoDrive(drivetrainSubsystem, new ChassisSpeeds(3, 0, 0), 1),
+        new AimAndFire(shooterSubsystem, conveyorSubsystem, limelight, drivetrainSubsystem)));
+    // autonomousChooser.addOption("Red 4 Ball", new
+    // RedFourBallAuto(intakeSubsystem, limelight, drivetrainSubsystem,
+    // shooterSubsystem, conveyorSubsystem));
+    autonomousChooser.setDefaultOption("2 Ball High Auto",
+        new RedTwoBallHighGoal(intakeSubsystem, drivetrainSubsystem, shooterSubsystem, limelight, conveyorSubsystem));
     SmartDashboard.putData("Autonomous Mode", autonomousChooser);
   }
+
   public Command getAutonomousCommand() {
+    System.out.println("getAutonomousCommand");
     return autonomousChooser.getSelected();
   }
 
   private static double deadband(double value, double deadband) {
     if (Math.abs(value) > deadband) {
-      if (value > 0.0) return (value - deadband) / (1.0 - deadband);
+      if (value > 0.0)
+        return (value - deadband) / (1.0 - deadband);
       return (value + deadband) / (1.0 - deadband);
     }
-      return 0.0;
+    return 0.0;
   }
 
   private static double modifyAxis(double value) {
-    // Deadband
-    value = deadband(value, 0.05);
-
-    // Square the axis
-    value = Math.copySign(value * value, value);
-
+    value = deadband(value, 0.05); // Deadband
+    value = Math.copySign(value * value, value); // Square the axis
     return value;
   }
 }

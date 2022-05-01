@@ -21,14 +21,11 @@ public class SwitchPipeline extends InstantCommand {
   @Override
   public void initialize() {
     switch (limelight.getPipeline()) {
-      case Constants.LimelightConstants.Pipelines.BLUE_BALLS:
-          limelight.setPipeline(Constants.LimelightConstants.Pipelines.REFLECTIVE_TAPE);
-          break;
       case Constants.LimelightConstants.Pipelines.REFLECTIVE_TAPE:
-          limelight.setPipeline(Constants.LimelightConstants.Pipelines.RED_BALLS);
+          limelight.setPipeline(Constants.LimelightConstants.Pipelines.BRIGHT);
           break;
-      case Constants.LimelightConstants.Pipelines.RED_BALLS:
-          limelight.setPipeline(Constants.LimelightConstants.Pipelines.BLUE_BALLS);
+      case Constants.LimelightConstants.Pipelines.BRIGHT:
+          limelight.setPipeline(Constants.LimelightConstants.Pipelines.REFLECTIVE_TAPE);
           break;
       }
   }

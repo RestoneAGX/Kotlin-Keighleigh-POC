@@ -14,7 +14,7 @@ public class Shoot extends CommandBase {
 
     @Override
     public void execute() {
-        shooter.rampUpShooter(power);
+        shooter.setRPM(power);
     }
 
     @Override

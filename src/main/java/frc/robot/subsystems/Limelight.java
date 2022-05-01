@@ -7,9 +7,9 @@ package frc.robot.subsystems;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.Constants.LimelightConstants;
+import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.networktables.NetworkTable;
-import edu.wpi.first.networktables.NetworkTableEntry;
 
 import edu.wpi.first.networktables.NetworkTableInstance;
 
@@ -45,26 +45,30 @@ public class Limelight extends SubsystemBase {
   public void periodic() {
 
     final NetworkTable table = NetworkTableInstance.getDefault().getTable("limelight");
-    final NetworkTableEntry tx = table.getEntry("tx");
-    final NetworkTableEntry ty = table.getEntry("ty");
-    final NetworkTableEntry ta = table.getEntry("ta");
+    // final NetworkTableEntry tx = table.getEntry("tx");
+    // final NetworkTableEntry ty = table.getEntry("ty");
+    // final NetworkTableEntry ta = table.getEntry("ta");
 
-    // read values periodically
-    double x = tx.getDouble(0.0);
-    double y = ty.getDouble(0.0);
-    double area = ta.getDouble(0.0);
+    // // read values periodically
+    // double x = tx.getDouble(0.0);
+    // double y = ty.getDouble(0.0);
+    // double area = ta.getDouble(0.0);
     final String stream, cam;
 
     stream = (getStreamMode() == Constants.LimelightConstants.StreamMode.PIP_MAIN) ? "Main" : "Secondary";
     cam = (getCameraMode() == Constants.LimelightConstants.CamMode.VISION) ? "Vision" : "Driver";
 
     // post to smart dashboard periodically
-    SmartDashboard.putNumber("LimelightX", x);
-    SmartDashboard.putNumber("LimelightY", y);
-    SmartDashboard.putNumber("LimelightArea", area);
+    // SmartDashboard.putNumber("LimelightX", x);
+    // SmartDashboard.putNumber("LimelightY", y);
+    // SmartDashboard.putNumber("LimelightArea", area);
     SmartDashboard.putString("Stream Mode", stream);
     SmartDashboard.putString("Camera Mode", cam);
     SmartDashboard.putNumber("Distance", getDistance());
+    //Test these 2 against each other to finally settle the issue
+    SmartDashboard.putNumber("Curve RPM", curveRPM()); 
+    SmartDashboard.putNumber("Line RPM", distanceToRpm());
+
     updateTargetData(table);
   }
 
@@ -87,10 +91,17 @@ public class Limelight extends SubsystemBase {
 
   public double distanceToRpm() {
     double distance = getDistance();
-    double squared = distance * distance;
-    double factor = squared * 0.00714285714286; // squared * 1/140
-    double rpm = factor + 3000;
+    //double squared = distance * distance;
+    //double factor = 0.00714 * squared; 
+    double factor = 2.67 * distance; // y = 3.4*x + 2392
+    double rpm = factor + 2805; // 3100
     return rpm;
+  }
+
+  public double curveRPM(){
+    double distance = SmartDashboard.getNumber("Distance", 0);
+    double squared = distance * distance;
+    return 0.00922451*squared + -2.11957*distance + 3450.01;
   }
 
   // This works only for objects that are above or below the robot
