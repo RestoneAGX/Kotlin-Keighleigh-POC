@@ -5,19 +5,19 @@
 /* the project.                                                               */
 /*----------------------------------------------------------------------------*/
 
-package frc.robot.commands;
+package frc.robot.java.commands;
 
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import frc.robot.kotlin.subsystems.Limelight;
 import frc.robot.Constants;
-import frc.robot.subsystems.Limelight;
 
-public class ToggleStreamMode extends InstantCommand {
+public class ToggleCameraMode extends InstantCommand {
     /**
-     * Creates a new ToggleStreamMode.
+     * Creates a new ToggleCameraMode.
      */
     Limelight limelight;
 
-    public ToggleStreamMode(Limelight limelight) {
+    public ToggleCameraMode(Limelight limelight) {
         this.limelight = limelight;
         // Use addRequirements() here to declare subsystem dependencies.
         addRequirements(limelight);
@@ -25,14 +25,12 @@ public class ToggleStreamMode extends InstantCommand {
 
     @Override
     public void initialize() {
-        switch (limelight.getStreamMode()) {
-        case Constants.LimelightConstants.StreamMode.PIP_MAIN:
-            limelight.setStreamMode(Constants.LimelightConstants.StreamMode.PIP_SECONDARY);
+        switch (limelight.getCameraMode()) {
+        case Constants.LimelightConstants.CamMode.DRIVER:
+            limelight.setCameraMode(Constants.LimelightConstants.CamMode.VISION);
             break;
-        case Constants.LimelightConstants.StreamMode.PIP_SECONDARY:
-            limelight.setCameraMode(Constants.LimelightConstants.StreamMode.STANDARD);
         default:
-            limelight.setStreamMode(Constants.LimelightConstants.StreamMode.PIP_MAIN);
+            limelight.setCameraMode(Constants.LimelightConstants.CamMode.DRIVER);
             break;
         }
     }

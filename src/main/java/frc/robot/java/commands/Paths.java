@@ -1,4 +1,4 @@
-package frc.robot.commands;
+package frc.robot.java.commands;
 
 import com.pathplanner.lib.PathPlannerTrajectory.PathPlannerState;
 
@@ -13,7 +13,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import frc.robot.Constants.AutoConstants;
-import frc.robot.subsystems.DrivetrainSubsystem;
+import frc.robot.java.DrivetrainSubsystem;
 
 /**
  * A command that uses two PID controllers ({@link PIDController}) and a

@@ -2,13 +2,13 @@
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
 
-package frc.robot.commands;
+package frc.robot.java.commands;
 
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.CommandBase;
+import frc.robot.kotlin.subsystems.Limelight;
+import frc.robot.java.DrivetrainSubsystem;
 import frc.robot.Constants.AimbotConstants;
-import frc.robot.subsystems.DrivetrainSubsystem;
-import frc.robot.subsystems.Limelight;
 
 public class AimBotAngle extends CommandBase {
 
@@ -26,7 +26,7 @@ public class AimBotAngle extends CommandBase {
     drivetrainSubsystem.drive(new ChassisSpeeds(
         0,
         0,
-        Math.toRadians(limelight.getTargetData().horizontalOffset) * 7.2)
+        Math.toRadians(limelight.getTargetData().getHorizontalOffset()) * 7.2)
         );
   }
 
@@ -37,6 +37,6 @@ public class AimBotAngle extends CommandBase {
 
   @Override
   public boolean isFinished() {
-    return (Math.abs(limelight.getTargetData().horizontalOffset) <= AimbotConstants.minimumAdjustment);
+    return (Math.abs(limelight.getTargetData().getHorizontalOffset()) <= AimbotConstants.minimumAdjustment);
   }
 }

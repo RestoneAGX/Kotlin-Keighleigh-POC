@@ -3,9 +3,9 @@ package frc.robot.kotlin.commands
 import edu.wpi.first.wpilibj2.command.InstantCommand
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup
 import edu.wpi.first.wpilibj2.command.WaitCommand
+import frc.robot.kotlin.subsystems.Limelight
 import frc.robot.kotlin.subsystems.Conveyor
 import frc.robot.kotlin.subsystems.Shooter
-import frc.robot.subsystems.Limelight
 
 class LowAuto(shooter: Shooter, conveyor: Conveyor, limelight: Limelight) : SequentialCommandGroup() {
     init {

@@ -11,14 +11,12 @@ import edu.wpi.first.wpilibj2.command.SequentialCommandGroup
 import edu.wpi.first.wpilibj2.command.button.JoystickButton
 import edu.wpi.first.wpilibj2.command.button.Trigger
 import frc.robot.Constants.*
-import frc.robot.commands.*
-import frc.robot.commands.Autonomous.TimedAutoDrive
-import frc.robot.subsystems.*
-import frc.robot.kotlin.subsystems.*
-import frc.robot.kotlin.commands.*
-import frc.robot.util.DPadButton
+import frc.robot.java.DrivetrainSubsystem
+import frc.robot.java.commands.*
 import frc.robot.kotlin.commands.AimAndFire
 import frc.robot.kotlin.commands.LowAuto
+import frc.robot.kotlin.commands.RedTwoBallHighGoal
+import frc.robot.kotlin.subsystems.*
 import kotlin.math.abs
 import kotlin.math.withSign
 
@@ -49,7 +47,8 @@ class RobotContainer {
         SmartDashboard.putData("Switch Pipeline", SwitchPipeline(limelight))
 
         SmartDashboard.putData("zero gyro", InstantCommand({ drivetrainSubsystem.zeroGyroscope() }))
-        SmartDashboard.putData("reset odometry", InstantCommand({ drivetrainSubsystem.resetOdometry() })) // Test if runnable can be used to replace instead command in Shuffleboard
+        // Test if runnable/function can be used to replace instead command in Shuffleboard
+        SmartDashboard.putData("reset odometry", InstantCommand({ drivetrainSubsystem.resetOdometry() }))
 
         setUpAutonomousChooser()
         configureButtonBindings() // Configure the button bindings
