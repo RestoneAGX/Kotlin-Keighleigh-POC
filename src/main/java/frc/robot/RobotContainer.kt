@@ -1,4 +1,4 @@
-package frc.robot.kotlin
+package frc.robot
 
 import edu.wpi.first.cameraserver.CameraServer
 import edu.wpi.first.math.kinematics.ChassisSpeeds
@@ -13,13 +13,13 @@ import edu.wpi.first.wpilibj2.command.button.Trigger
 import frc.robot.Constants.*
 import frc.robot.java.DrivetrainSubsystem
 import frc.robot.java.commands.*
+import frc.robot.kotlin.DPadButton
 import frc.robot.kotlin.commands.AimAndFire
 import frc.robot.kotlin.commands.LowAuto
 import frc.robot.kotlin.commands.RedTwoBallHighGoal
 import frc.robot.kotlin.subsystems.*
 import kotlin.math.abs
 import kotlin.math.withSign
-
 @Suppress("NAME_SHADOWING")
 class RobotContainer {
     private val drivetrainSubsystem = DrivetrainSubsystem()
@@ -42,18 +42,20 @@ class RobotContainer {
                 { modifyAxis(driverController.leftX) * DrivetrainSubsystem.MAX_VELOCITY_METERS_PER_SECOND }  // Left stick X axis -> left and right movement
         ) { modifyAxis(driverController.rightX) * DrivetrainSubsystem.MAX_ANGULAR_VELOCITY_RADIANS_PER_SECOND } // Right stick X axis -> rotation
 
-        SmartDashboard.putData("Toggle Camera Mode", ToggleCameraMode(limelight))
-        SmartDashboard.putData("Toggle Stream Mode", ToggleStreamMode(limelight))
-        SmartDashboard.putData("Switch Pipeline", SwitchPipeline(limelight))
+        SmartDashboard.putData("Toggle Camera Mode", InstantCommand(limelight::ToggleCameraMode))
+        SmartDashboard.putData("Toggle Stream Mode", InstantCommand(limelight::ToggleStreamMode))
+        SmartDashboard.putData("Switch Pipeline", InstantCommand(limelight::SwitchPipeline))
+        //Add lidar support later
 
-        SmartDashboard.putData("zero gyro", InstantCommand({ drivetrainSubsystem.zeroGyroscope() }))
+        SmartDashboard.putData("zero gyro", InstantCommand(drivetrainSubsystem::zeroGyroscope))
         // Test if runnable/function can be used to replace instead command in Shuffleboard
-        SmartDashboard.putData("reset odometry", InstantCommand({ drivetrainSubsystem.resetOdometry() }))
+        SmartDashboard.putData("reset odometry", InstantCommand(drivetrainSubsystem::resetOdometry))
 
         setUpAutonomousChooser()
         configureButtonBindings() // Configure the button bindings
         CameraServer.startAutomaticCapture()
     }
+
 
     private fun configureButtonBindings() { // set up triggers and such
         val mechRightTrigger = Trigger {

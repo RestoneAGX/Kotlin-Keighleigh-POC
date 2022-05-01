@@ -5,6 +5,7 @@ import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import frc.robot.Constants.LimelightConstants
+import frc.robot.Constants.LimelightConstants.CamMode
 
 class Limelight @JvmOverloads constructor(var ledMode: Int = LimelightConstants.LedMode.DEFAULT, var streamMode: Int = LimelightConstants.CamMode.VISION) : SubsystemBase() {
     // basically a struct that contains all of the targetData we're pulling from the limelight
@@ -110,4 +111,23 @@ class Limelight @JvmOverloads constructor(var ledMode: Int = LimelightConstants.
         set(newSnapshotMode) {
             NetworkTableInstance.getDefault().getTable("limelight").getEntry("snapshot").setNumber(newSnapshotMode)
         }
+
+    fun ToggleCameraMode (){
+        cameraMode = if (cameraMode == CamMode.DRIVER) CamMode.VISION else CamMode.DRIVER
+    }
+
+    fun ToggleStreamMode (){
+        when (streamMode) {
+            LimelightConstants.StreamMode.PIP_MAIN -> streamMode = LimelightConstants.StreamMode.PIP_SECONDARY
+            LimelightConstants.StreamMode.PIP_SECONDARY -> {
+                cameraMode = LimelightConstants.StreamMode.STANDARD
+                streamMode = LimelightConstants.StreamMode.PIP_MAIN
+            }
+            else -> streamMode = LimelightConstants.StreamMode.PIP_MAIN
+        }
+    }
+
+    fun SwitchPipeline (){
+        pipeline = if (pipeline == LimelightConstants.Pipelines.BRIGHT) LimelightConstants.Pipelines.REFLECTIVE_TAPE else LimelightConstants.Pipelines.BRIGHT
+    }
 }
