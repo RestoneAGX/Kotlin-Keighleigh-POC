@@ -3,11 +3,11 @@ package frc.robot.kotlin.subsystems
 import com.revrobotics.ColorSensorV3
 import edu.wpi.first.wpilibj.I2C
 import edu.wpi.first.wpilibj.util.Color
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.RobotState
 
-class ColorSensor {
+class ColorSensor : SubsystemBase() {
     private var port1 = I2C.Port.kOnboard //Might want to replace with PWM in-direct for I2C
-
     private var port2 = I2C.Port.kMXP
 
     private var colorSensorLower = ColorSensorV3(port1)
@@ -33,7 +33,7 @@ class ColorSensor {
 
     fun ColorSensor() {}
 
-    fun periodic() {
+    override fun periodic() {
         RobotState.setEntryValue("Sensors", "Lower Occupied", occupiedLower())
         RobotState.setEntryValue("Sensors", "Upper Occupied", occupiedUpper())
         RobotState.setEntryValue("Sensors", "Lower Proximity", colorSensorLower.proximity)
